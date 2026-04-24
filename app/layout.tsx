@@ -7,13 +7,20 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
+import { Viewport } from 'next';
+
 export const metadata: Metadata = {
   title: 'PU-BusLink — Poornima University Smart Bus System',
   description:
     'Live bus tracking, digital pass, and route management for Poornima University, Jaipur. Secure, real-time, mobile-friendly.',
   keywords: ['Poornima University', 'bus tracking', 'digital pass', 'PU BusLink', 'Jaipur'],
   authors: [{ name: 'Poornima University IT Department' }],
-  viewport: 'width=device-width, initial-scale=1',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#004892',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
