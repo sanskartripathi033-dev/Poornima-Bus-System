@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Bus, MapPin, QrCode, Shield, Download, ChevronRight, CheckCircle, Smartphone, Wifi } from 'lucide-react';
 
@@ -208,10 +210,10 @@ export default function LandingPage() {
                 Install the PU-BusLink app on your Android device for the best native experience.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#" className="btn-navy px-8 py-4 text-base">
+                <button onClick={() => alert('The Android App is currently in development! Please use the "Use Web Version" button to sign in directly from your browser.')} className="btn-navy px-8 py-4 text-base flex items-center justify-center gap-2">
                   <Download className="w-5 h-5" />
                   Download APK (Android)
-                </a>
+                </button>
                 <Link href="/login" className="btn-gold bg-white text-[#333333] border border-gray-200 hover:bg-gray-50 px-8 py-4 text-base shadow-sm">
                   Use Web Version
                   <ChevronRight className="w-5 h-5" />
