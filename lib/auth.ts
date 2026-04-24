@@ -36,13 +36,14 @@ export async function registerWithEmail(
   }
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   // Create user profile in Firestore
+  const isAdmin = email.toLowerCase().startsWith('admin');
   await setDoc(doc(db, 'users', cred.user.uid), {
     uid: cred.user.uid,
     name,
     studentId,
     email,
     routeId,
-    role: 'student',
+    role: isAdmin ? 'admin' : 'student',
     createdAt: serverTimestamp(),
   });
   return cred;
@@ -61,13 +62,14 @@ export async function signInWithGoogle() {
   const userRef = doc(db, 'users', result.user.uid);
   const snap = await getDoc(userRef);
   if (!snap.exists()) {
+    const isAdmin = email.toLowerCase().startsWith('admin');
     await setDoc(userRef, {
       uid: result.user.uid,
       name: result.user.displayName || 'PU Student',
       studentId: '',
       email,
       routeId: '',
-      role: 'student',
+      role: isAdmin ? 'admin' : 'student',
       createdAt: serverTimestamp(),
     });
   }
