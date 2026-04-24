@@ -111,24 +111,25 @@ body {
 .btn-gold {
   background: #FABE15;
   color: #333333;
-  font-weight: 600;
-  border-radius: 6px;
-  padding: 10px 24px;
-  transition: all 0.2s ease;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 14px 28px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   border: none;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(250,190,21,0.2);
+  box-shadow: 0 4px 10px rgba(250,190,21,0.25);
 }
 .btn-gold:hover {
   background: #EAA800;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(250,190,21,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(250,190,21,0.35);
 }
 .btn-gold:active { transform: translateY(0); }
 .btn-gold:disabled {
@@ -143,23 +144,25 @@ body {
 .btn-navy {
   background: #004892;
   color: #ffffff;
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 10px 24px;
-  transition: all 0.2s ease;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 14px 28px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   border: none;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,72,146,0.2);
 }
 .btn-navy:hover {
   background: #003670;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0,72,146,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,72,146,0.25);
 }
 
 /* Card base */
@@ -178,18 +181,19 @@ body {
 /* Input fields */
 .pu-input {
   background: #FFFFFF;
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
-  padding: 10px 16px 10px 42px;
-  color: #333333;
+  border: 1px solid #D1D5DB;
+  border-radius: 12px;
+  padding: 14px 16px 14px 46px;
+  color: #1F2937;
   width: 100%;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 16px;
+  transition: all 0.2s ease;
   -webkit-appearance: none;
   appearance: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.pu-input::placeholder { color: #94A3B8; }
+.pu-input::placeholder { color: #9CA3AF; }
 .pu-input:focus {
   outline: none;
   border-color: #004892;

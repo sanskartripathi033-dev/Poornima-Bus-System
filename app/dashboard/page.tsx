@@ -24,7 +24,19 @@ function DashboardContent() {
     }
   }, [profile?.routeId]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="w-16 h-16 bg-[#E9F2FF] rounded-2xl flex items-center justify-center mb-4 animate-pulse">
+          <RefreshCw className="w-8 h-8 text-[#004892] animate-spin" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Setting up your dashboard...</h2>
+        <p className="text-slate-500 max-w-xs mx-auto">
+          We are matching your account with your route details. Please wait a moment.
+        </p>
+      </div>
+    );
+  }
 
   const quickActions = [
     { href: '/tracking', icon: MapPin, label: 'Track My Bus', desc: 'See live location', color: 'from-blue-600 to-blue-500' },

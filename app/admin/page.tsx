@@ -135,16 +135,18 @@ function AdminContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 bg-gray-100 border border-gray-200 rounded-2xl p-1.5 mb-8 overflow-x-auto shadow-inner">
+      <div className="flex gap-2 bg-gray-100 border border-gray-200 rounded-2xl p-2 mb-8 overflow-x-auto shadow-inner no-scrollbar">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-              tab === id ? 'bg-white text-[#004892] shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800'
+            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-base font-black transition-all whitespace-nowrap flex-shrink-0 ${
+              tab === id 
+                ? 'bg-[#004892] text-white shadow-md scale-[1.02]' 
+                : 'bg-white/50 text-slate-500 hover:text-[#004892] hover:bg-white'
             }`}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-5 h-5" />
             {label}
           </button>
         ))}
