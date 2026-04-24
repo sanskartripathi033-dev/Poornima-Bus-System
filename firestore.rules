@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user has admin role
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper: check if email belongs to Poornima University
+    function isPUEmail() {
+      return isAuth() &&
+        (request.auth.token.email.matches('.*@poornima\\.org') ||
+         request.auth.token.email.matches('.*@poornima\\.edu\\.in'));
+    }
+
+    // Users collection: each user can read/write their own doc; admins can read all
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuth() && request.auth.uid == userId && isPUEmail();
+      allow update: if isAuth() && request.auth.uid == userId && isPUEmail();
+      allow delete: if isAdmin();
+    }
+
+    // Routes: all authenticated PU users can read; only admins can write
+    match /routes/{routeId} {
+      allow read: if isAuth() && isPUEmail();
+      allow write: if isAdmin();
+    }
+
+    // Buses: all authenticated PU users can read; only admins can write
+    match /buses/{busId} {
+      allow read: if isAuth() && isPUEmail();
+      allow write: if isAdmin();
+    }
+
+    // Alerts: all authenticated PU users can read; only admins can write
+    match /alerts/{alertId} {
+      allow read: if isAuth() && isPUEmail();
+      allow write: if isAdmin();
+    }
+  }
+}

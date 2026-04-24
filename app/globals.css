@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+/* ── Poornima University Brand Theme ─────────────────── */
+@theme {
+  /* PU Primary Colors */
+  --color-pu-navy:      #004892;
+  --color-pu-navy-dark: #002D52;
+  --color-pu-navy-deep: #002147;
+  --color-pu-gold:      #FABE15;
+  --color-pu-gold-dark: #EAA800;
+  --color-pu-gold-light:#FCD659;
+  --color-pu-accent:    #E9F2FF;
+
+  /* Neutral */
+  --color-pu-white:     #FFFFFF;
+  --color-pu-offwhite:  #FAFAFA;
+  --color-pu-silver:    #E2E8F0;
+  --color-pu-muted:     #64748B;
+  --color-pu-text:      #333333;
+
+  /* Font stacks */
+  --font-family-sans:    'Poppins', system-ui, sans-serif;
+  --font-family-display: 'Playfair Display', Georgia, serif;
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
+  background-color: var(--color-pu-offwhite, #FAFAFA);
+  color: var(--color-pu-text, #333333);
+  font-family: 'Poppins', system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Mobile viewport fix */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+}
+
+/* ── Custom scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F8FAFC; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #004892; }
+
+/* ── Leaflet Overrides ────────────────────────────────── */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.custom-popup .leaflet-popup-tip { background: #FFFFFF !important; }
+.leaflet-popup-content { margin: 0 !important; }
+
+.leaflet-control-zoom a {
+  background-color: #FFFFFF !important;
+  color: #004892 !important;
+  border-color: rgba(0,72,146,0.1) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+  background-color: #F8FAFC !important;
+  color: #002D52 !important;
+}
+.leaflet-control-attribution {
+  background: rgba(255,255,255,0.9) !important;
+  color: #64748B !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a { color: #004892 !important; }
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.35s ease-out both; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up 0.5s ease-out both; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Utility classes ──────────────────────────────────── */
+
+/* Glass card (light) */
+.glass {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* PU Gold button */
+.btn-gold {
+  background: #FABE15;
+  color: #333333;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 10px 24px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(250,190,21,0.2);
+}
+.btn-gold:hover {
+  background: #EAA800;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(250,190,21,0.3);
+}
+.btn-gold:active { transform: translateY(0); }
+.btn-gold:disabled {
+  background: #E2E8F0;
+  color: #94A3B8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* PU Navy button */
+.btn-navy {
+  background: #004892;
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 10px 24px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+.btn-navy:hover {
+  background: #003670;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0,72,146,0.2);
+}
+
+/* Card base */
+.pu-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pu-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Input fields */
+.pu-input {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 10px 16px 10px 42px;
+  color: #333333;
+  width: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pu-input::placeholder { color: #94A3B8; }
+.pu-input:focus {
+  outline: none;
+  border-color: #004892;
+  box-shadow: 0 0 0 3px rgba(0,72,146,0.1);
+}
+
+select.pu-input { padding-left: 16px; }
+select.pu-input option { background: #FFFFFF; color: #333333; }
+
+/* Gold accent bar */
+.gold-bar {
+  height: 3px;
+  background: #FABE15;
+  border-radius: 2px;
+}
+
+/* Section divider */
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: #FABE15;
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+/* ── Mobile tap targets ────────────────────────────────── */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Minimum 44px tap targets on mobile */
+@media (max-width: 768px) {
+  button, .btn-gold, .btn-navy {
+    min-height: 44px;
+  }
+  .pu-input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+
+/* ── Safe area for notch phones ────────────────────────── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
