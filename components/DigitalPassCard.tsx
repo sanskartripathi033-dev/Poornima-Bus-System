@@ -50,9 +50,9 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
   });
 
   return (
-    <div className="relative w-full max-w-sm mx-auto">
+    <div className="relative w-full mx-auto sm:max-w-md cursor-pointer group active:scale-[0.98] transition-transform duration-200">
       {/* Subtle Glow behind card */}
-      <div className="absolute -inset-2 bg-gradient-to-r from-[#004892]/20 to-[#FABE15]/20 rounded-3xl blur-xl" />
+      <div className="absolute -inset-2 bg-gradient-to-r from-[#004892]/20 to-[#FABE15]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all" />
 
       <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
         {/* Card Header (Poornima Blue) */}

@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <AuthProvider>
             <Navbar />
-            <main className="pt-16">{children}</main>
+            <main className="pt-16 pb-20 md:pb-0">{children}</main>
           </AuthProvider>
         </ErrorBoundary>
       </body>

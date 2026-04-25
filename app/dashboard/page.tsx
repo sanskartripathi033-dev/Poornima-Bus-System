@@ -67,7 +67,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
       {/* Alerts */}
       <AlertBanner />
 
@@ -164,13 +164,15 @@ function DashboardContent() {
                   <Link
                     key={action.href}
                     href={action.href}
-                    className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md hover:border-[#004892]/30 transition-all group hover:-translate-y-0.5 duration-200"
+                    className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-[#004892]/30 active:scale-[0.98] transition-all group duration-200 flex items-center gap-4"
                   >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md shadow-blue-900/10`}>
-                      <Icon className="w-5 h-5 text-white" />
+                    <div className={`w-12 h-12 flex-shrink-0 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-md shadow-blue-900/10`}>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <p className="text-slate-900 font-bold text-sm">{action.label}</p>
-                    <p className="text-slate-500 font-medium text-xs mt-0.5">{action.desc}</p>
+                    <div>
+                      <p className="text-slate-900 font-black text-base">{action.label}</p>
+                      <p className="text-slate-500 font-medium text-xs mt-0.5">{action.desc}</p>
+                    </div>
                   </Link>
                 );
               })}

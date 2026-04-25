@@ -18,7 +18,7 @@ export default function Navbar() {
   const { user, profile, isAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // Used for profile dropdown on mobile
 
   const handleLogout = async () => {
     await logOut();
@@ -72,36 +72,68 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">
-                  <User className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-700 max-w-[140px] truncate">
-                    {profile?.name || user.displayName || 'Student'}
-                  </span>
-                  {isAdmin && (
-                    <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 font-semibold">
-                      ADMIN
+              <div className="relative">
+                {/* Desktop Profile Info & Logout */}
+                <div className="hidden md:flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">
+                    <User className="w-4 h-4 text-slate-500" />
+                    <span className="text-sm text-slate-700 max-w-[140px] truncate">
+                      {profile?.name || user.displayName || 'Student'}
                     </span>
-                  )}
+                    {isAdmin && (
+                      <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 font-semibold">
+                        ADMIN
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all font-semibold"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
+
+                {/* Mobile Profile Trigger */}
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="md:hidden p-2 rounded-lg text-slate-600 hover:text-[#004892] hover:bg-slate-100 transition-all"
+                  className="md:hidden w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 active:scale-95 transition-transform"
                 >
-                  {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  <User className="w-5 h-5 text-slate-600" />
                 </button>
-              </>
+
+                {/* Mobile Profile Dropdown */}
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 md:hidden overflow-hidden animate-fade-in">
+                      <div className="p-4 bg-slate-50 border-b border-gray-100">
+                        <p className="font-bold text-slate-900 truncate">{profile?.name || 'Student'}</p>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{profile?.email || user.email}</p>
+                        {isAdmin && (
+                          <span className="inline-block mt-2 text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 font-bold tracking-wider">
+                            ADMIN
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Log Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             ) : (
               <Link
                 href="/login"
-                className="px-4 py-2 rounded-lg bg-[#004892] hover:bg-[#003670] text-white text-sm font-semibold transition-all"
+                className="px-5 py-2.5 rounded-xl bg-[#004892] hover:bg-[#003670] text-white text-sm font-bold transition-all shadow-md active:scale-95"
               >
                 Sign In
               </Link>
@@ -110,44 +142,29 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && user && (
-        <div className="md:hidden border-t border-gray-200 bg-white px-4 py-3 space-y-1 shadow-lg">
-          {visibleLinks.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? 'bg-blue-50 text-[#004892] border border-blue-100'
-                    : 'text-slate-600 hover:text-[#004892] hover:bg-slate-50'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </Link>
-            );
-          })}
-          <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-slate-500" />
-              <span className="text-sm text-slate-700">{profile?.name || 'Student'}</span>
-              {isAdmin && (
-                <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5 font-semibold">
-                  ADMIN
-                </span>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-800 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+      {/* --- Mobile Bottom Navigation Bar --- */}
+      {user && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+          <div className="flex justify-around items-center h-16 px-2">
+            {visibleLinks.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all active:scale-95 ${
+                    active ? 'text-[#004892]' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <div className={`p-1.5 rounded-xl transition-colors ${active ? 'bg-blue-50' : 'bg-transparent'}`}>
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={active ? 2.5 : 2} />
+                  </div>
+                  <span className={`text-[9px] sm:text-[10px] font-bold ${active ? 'text-[#004892]' : 'text-slate-500'}`}>
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
