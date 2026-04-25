@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Route, Bell, QrCode, RefreshCw } from 'lucide-react';
+import { MapPin, Route, Bell, QrCode, RefreshCw, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
@@ -11,7 +11,7 @@ import { getRoute } from '@/lib/firestore';
 import { BusRoute } from '@/lib/types';
 
 function DashboardContent() {
-  const { profile } = useAuth();
+  const { profile, loading } = useAuth();
   const [route, setRoute] = useState<BusRoute | null>(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
 
@@ -24,16 +24,35 @@ function DashboardContent() {
     }
   }, [profile?.routeId]);
 
-  if (!profile) {
+  // Still loading auth / profile from Firestore
+  if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
-        <div className="w-16 h-16 bg-[#E9F2FF] rounded-2xl flex items-center justify-center mb-4 animate-pulse">
+        <div className="w-16 h-16 bg-[#E9F2FF] rounded-2xl flex items-center justify-center mb-4">
           <RefreshCw className="w-8 h-8 text-[#004892] animate-spin" />
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">Setting up your dashboard...</h2>
         <p className="text-slate-500 max-w-xs mx-auto">
           We are matching your account with your route details. Please wait a moment.
         </p>
+      </div>
+    );
+  }
+
+  // Auth resolved but no Firestore profile found
+  if (!profile) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Profile not found</h2>
+        <p className="text-slate-500 max-w-xs mx-auto mb-6">
+          Your account exists but we couldn&apos;t find your profile. This can happen on first login via Google. Please try logging out and signing in again.
+        </p>
+        <Link href="/login" className="btn-navy px-6 py-3 text-sm">
+          Go to Login
+        </Link>
       </div>
     );
   }

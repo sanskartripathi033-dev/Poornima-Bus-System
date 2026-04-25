@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Bus, MapPin, QrCode, Shield, Download, ChevronRight, CheckCircle, Smartphone, Wifi } from 'lucide-react';
+import { Bus, MapPin, QrCode, Shield, Download, ChevronRight, CheckCircle, Smartphone, Wifi, Globe, Share2 } from 'lucide-react';
 
 const features = [
   {
@@ -38,6 +39,7 @@ const steps = [
 ];
 
 export default function LandingPage() {
+  const [showInstall, setShowInstall] = useState(false);
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Hero Section */}
@@ -73,7 +75,7 @@ export default function LandingPage() {
               </Link>
               <a href="#download" className="btn-navy bg-white text-[#004892] border border-[#004892]/20 hover:bg-[#E9F2FF] shadow-sm px-8 py-4 text-base">
                 <Download className="w-5 h-5 text-[#004892]" />
-                Download APK
+                Install App
               </a>
             </div>
           </div>
@@ -194,7 +196,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Download Section */}
+      {/* Download / Install Section */}
       <section id="download" className="py-24 bg-[#FAFAFA]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white rounded-3xl p-12 border border-gray-200 relative overflow-hidden shadow-xl">
@@ -204,25 +206,69 @@ export default function LandingPage() {
             <div className="relative">
               <Smartphone className="w-16 h-16 text-[#004892] mx-auto mb-6" />
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">
-                Download the App
+                Install the App
               </h2>
               <p className="text-slate-600 text-lg mb-8 max-w-lg mx-auto">
-                Install the PU-BusLink app on your Android device for the best native experience.
+                PU-BusLink is a <strong>Progressive Web App (PWA)</strong> — install it directly from your browser for a full native experience. No APK needed.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a 
-                  href="/PU-BusLink.apk" 
-                  download 
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+                <button
+                  onClick={() => setShowInstall(!showInstall)}
                   className="btn-navy px-8 py-4 text-base flex items-center justify-center gap-2"
                 >
                   <Download className="w-5 h-5" />
-                  Download APK (Android)
-                </a>
-                <Link href="/login" className="btn-gold bg-white text-[#333333] border border-gray-200 hover:bg-gray-50 px-8 py-4 text-base shadow-sm">
-                  Use Web Version
+                  How to Install
+                </button>
+                <Link href="/login" className="btn-gold px-8 py-4 text-base">
+                  Open Web App
                   <ChevronRight className="w-5 h-5" />
                 </Link>
               </div>
+
+              {/* Install Instructions */}
+              {showInstall && (
+                <div className="text-left mt-2 grid sm:grid-cols-2 gap-4 animate-slide-up">
+                  {/* Android */}
+                  <div className="bg-[#FAFAFA] border border-gray-200 rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#E9F2FF] flex items-center justify-center">
+                        <Globe className="w-5 h-5 text-[#004892]" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Android (Chrome)</p>
+                        <p className="text-slate-500 text-xs">Recommended method</p>
+                      </div>
+                    </div>
+                    <ol className="space-y-2 text-sm text-slate-700">
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">1.</span>Open this website in <strong>Chrome</strong></li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">2.</span>Tap the <strong>⋮ menu</strong> (top-right)</li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">3.</span>Select <strong>&quot;Add to Home Screen&quot;</strong></li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">4.</span>Tap <strong>Add</strong> — the app icon appears on your home screen!</li>
+                    </ol>
+                  </div>
+
+                  {/* iOS */}
+                  <div className="bg-[#FAFAFA] border border-gray-200 rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#E9F2FF] flex items-center justify-center">
+                        <Share2 className="w-5 h-5 text-[#004892]" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">iPhone / iOS (Safari)</p>
+                        <p className="text-slate-500 text-xs">Must use Safari browser</p>
+                      </div>
+                    </div>
+                    <ol className="space-y-2 text-sm text-slate-700">
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">1.</span>Open this website in <strong>Safari</strong></li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">2.</span>Tap the <strong>Share</strong> button (box with arrow)</li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">3.</span>Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong></li>
+                      <li className="flex gap-2"><span className="font-black text-[#004892] shrink-0">4.</span>Tap <strong>Add</strong> — done!</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm text-slate-500 font-medium">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600" />
