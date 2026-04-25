@@ -28,6 +28,12 @@ export async function getRoute(id: string): Promise<BusRoute | null> {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null;
 }
 
+export function subscribeRoute(id: string, callback: (route: BusRoute | null) => void): Unsubscribe {
+  return onSnapshot(doc(db, 'routes', id), (snap) => {
+    callback(snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null);
+  });
+}
+
 export async function addRoute(data: Omit<BusRoute, 'id' | 'createdAt' | 'updatedAt'>) {
   return addDoc(collection(db, 'routes'), {
     ...data,

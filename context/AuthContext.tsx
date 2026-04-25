@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { onAuthChange, getUserProfile } from '@/lib/auth';
+import { onAuthChange, subscribeUserProfile } from '@/lib/auth';
 import { PUUser } from '@/lib/types';
 
 interface AuthContextType {
@@ -25,22 +25,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthChange(async (firebaseUser) => {
-      try {
-        setUser(firebaseUser);
-        if (firebaseUser) {
-          const p = await getUserProfile(firebaseUser.uid);
+    let profileUnsub: (() => void) | undefined;
+    const authUnsub = onAuthChange((firebaseUser: User | null) => {
+      setUser(firebaseUser);
+      if (profileUnsub) {
+        profileUnsub();
+        profileUnsub = undefined;
+      }
+      if (firebaseUser) {
+        profileUnsub = subscribeUserProfile(firebaseUser.uid, (p: PUUser | null) => {
           setProfile(p);
-        } else {
-          setProfile(null);
-        }
-      } catch (error) {
-        console.error("Auth error:", error);
-      } finally {
+          setLoading(false);
+        });
+        
+        // Safety timeout in case profile sync hangs, avoid infinite UI loading
+        setTimeout(() => setLoading(false), 3000);
+      } else {
+        setProfile(null);
         setLoading(false);
       }
     });
-    return () => unsub();
+    return () => {
+      authUnsub();
+      if (profileUnsub) profileUnsub();
+    };
   }, []);
 
   return (

@@ -7,7 +7,7 @@ import {
   User,
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, serverTimestamp, Unsubscribe } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { PUUser } from './types';
 
@@ -88,4 +88,17 @@ export async function getUserProfile(uid: string): Promise<PUUser | null> {
   const snap = await getDoc(doc(db, 'users', uid));
   if (!snap.exists()) return null;
   return snap.data() as PUUser;
+}
+
+export function subscribeUserProfile(uid: string, callback: (profile: PUUser | null) => void): Unsubscribe {
+  return onSnapshot(doc(db, 'users', uid), (snap) => {
+    if (!snap.exists()) {
+      callback(null);
+    } else {
+      callback(snap.data() as PUUser);
+    }
+  }, (error) => {
+    console.error("Profile sync error:", error);
+    callback(null);
+  });
 }

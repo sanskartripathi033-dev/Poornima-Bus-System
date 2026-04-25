@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import AlertBanner from '@/components/AlertBanner';
 import DigitalPassCard from '@/components/DigitalPassCard';
-import { getRoute } from '@/lib/firestore';
+import { subscribeRoute } from '@/lib/firestore';
 import { BusRoute } from '@/lib/types';
 
 function DashboardContent() {
@@ -18,9 +18,13 @@ function DashboardContent() {
   useEffect(() => {
     if (profile?.routeId) {
       setLoadingRoute(true);
-      getRoute(profile.routeId)
-        .then(setRoute)
-        .finally(() => setLoadingRoute(false));
+      const unsub = subscribeRoute(profile.routeId, (r: BusRoute | null) => {
+        setRoute(r);
+        setLoadingRoute(false);
+      });
+      return () => unsub();
+    } else {
+      setRoute(null);
     }
   }, [profile?.routeId]);
 
@@ -128,8 +132,8 @@ function DashboardContent() {
                   <div className="flex flex-wrap gap-2">
                     {route.stops
                       .slice()
-                      .sort((a, b) => a.order - b.order)
-                      .map((s) => (
+                      .sort((a: any, b: any) => a.order - b.order)
+                      .map((s: any) => (
                         <span key={s.id} className="text-xs font-medium bg-[#E9F2FF] border border-[#004892]/20 text-[#004892] rounded-lg px-2.5 py-1">
                           {s.name}
                         </span>
