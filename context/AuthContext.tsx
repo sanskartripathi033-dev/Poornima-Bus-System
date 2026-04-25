@@ -33,13 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileUnsub = undefined;
       }
       if (firebaseUser) {
+        // Safety timeout increased to 15 seconds for slow rural connections
+        const timeout = setTimeout(() => {
+          console.warn("Profile fetch timeout reached (15s)");
+          setLoading(false);
+        }, 15000);
+
         profileUnsub = subscribeUserProfile(firebaseUser.uid, (p: PUUser | null) => {
+          clearTimeout(timeout);
           setProfile(p);
           setLoading(false);
         });
-        
-        // Safety timeout in case profile sync hangs, avoid infinite UI loading
-        setTimeout(() => setLoading(false), 3000);
       } else {
         setProfile(null);
         setLoading(false);
