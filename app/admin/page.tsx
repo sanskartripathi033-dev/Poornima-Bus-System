@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Shield, Plus, Edit2, Trash2, Bell, Bus, Route, Save, X,
-  Users, TrendingUp, AlertTriangle, CheckCircle2, Send,
+  Users, TrendingUp, AlertTriangle, CheckCircle2, Send, Loader2,
 } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 import {
@@ -19,6 +19,10 @@ const EMPTY_ROUTE: Omit<BusRoute, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '', busNumber: '', stops: [], active: true, departureTime: '', returnTime: '',
 };
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Something went wrong.';
+}
+
 function AdminContent() {
   const [tab, setTab] = useState<AdminTab>('overview');
   const [routes, setRoutes] = useState<BusRoute[]>([]);
@@ -31,6 +35,7 @@ function AdminContent() {
 
   // Alert form
   const [alertMsg, setAlertMsg] = useState('');
+  const [overviewAlertMsg, setOverviewAlertMsg] = useState('');
   const [alertType, setAlertType] = useState<BusAlert['type']>('info');
   const [alertBusNum, setAlertBusNum] = useState('');
 
@@ -38,8 +43,13 @@ function AdminContent() {
   const [editBusId, setEditBusId] = useState('');
   const [editLat, setEditLat] = useState('');
   const [editLng, setEditLng] = useState('');
+  const [newBus, setNewBus] = useState({ busNumber: '', routeId: '', driverName: '', driverPhone: '' });
+
+  // Modal map for delete confirm
+  const [deleteConfirm, setDeleteConfirm] = useState<{type: 'route'|'bus', id: string, name: string} | null>(null);
 
   const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -67,31 +77,70 @@ function AdminContent() {
         showToast('Route added successfully!');
       }
       setEditingRoute(null);
-    } catch (e: any) { showToast('Error: ' + e.message); }
+    } catch (error) { showToast('Error: ' + getErrorMessage(error)); }
     setSaving(false);
   };
 
-  const handleDeleteRoute = async (id: string) => {
-    if (!confirm('Delete this route?')) return;
-    await deleteRoute(id);
-    showToast('Route deleted.');
+  const handleDeleteRoute = async () => {
+    if (!deleteConfirm) return;
+    setDeleteId(deleteConfirm.id);
+    try {
+      await deleteRoute(deleteConfirm.id);
+      showToast('Route deleted.');
+      setDeleteConfirm(null);
+    } catch (error) {
+      showToast('Error: ' + getErrorMessage(error));
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   const handleToggleRoute = async (route: BusRoute) => {
-    await updateRoute(route.id, { active: !route.active });
-    showToast(`Route ${!route.active ? 'activated' : 'deactivated'}.`);
+    try {
+      await updateRoute(route.id, { active: !route.active });
+      showToast(`Route ${!route.active ? 'activated' : 'deactivated'}.`);
+    } catch (error) {
+      showToast('Error: ' + getErrorMessage(error));
+    }
   };
 
   // Alert broadcast
-  const handleBroadcast = async () => {
-    if (!alertMsg.trim()) return;
+  const handleBroadcast = async (msg: string = alertMsg, type: BusAlert['type'] = alertType, busNum: string = alertBusNum) => {
+    if (!msg.trim()) return;
     setSaving(true);
     try {
-      await addAlert({ message: alertMsg, type: alertType, busNumber: alertBusNum || undefined, active: true });
-      setAlertMsg(''); setAlertBusNum('');
+      await addAlert({ message: msg, type: type, busNumber: busNum || undefined, active: true });
+      if (msg === alertMsg) { setAlertMsg(''); setAlertBusNum(''); }
+      if (msg === overviewAlertMsg) { setOverviewAlertMsg(''); }
       showToast('Alert broadcast to all students!');
-    } catch (e: any) { showToast('Error: ' + e.message); }
+    } catch (error) { showToast('Error: ' + getErrorMessage(error)); }
     setSaving(false);
+  };
+
+  // Add bus
+  const handleAddBus = async () => {
+    if (!newBus.busNumber || !newBus.routeId || !newBus.driverName) return;
+    setSaving(true);
+    try {
+      await addBus({ ...newBus, lat: 0, lng: 0, speed: 0, isActive: false });
+      setNewBus({ busNumber: '', routeId: '', driverName: '', driverPhone: '' });
+      showToast('Bus added successfully!');
+    } catch (error) { showToast('Error: ' + getErrorMessage(error)); }
+    setSaving(false);
+  };
+  
+  const handleDeleteBus = async () => {
+    if (!deleteConfirm) return;
+    setDeleteId(deleteConfirm.id);
+    try {
+      await deleteBus(deleteConfirm.id);
+      showToast('Bus deleted.');
+      setDeleteConfirm(null);
+    } catch (error) {
+      showToast('Error: ' + getErrorMessage(error));
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   // Bus location update
@@ -103,11 +152,11 @@ function AdminContent() {
       await updateBusLocation(editBusId, parseFloat(editLat), parseFloat(editLng));
       showToast('Bus location updated!');
       setEditBusId(''); setEditLat(''); setEditLng('');
-    } catch (e: any) { showToast('Error: ' + e.message); }
+    } catch (error) { showToast('Error: ' + getErrorMessage(error)); }
     setSaving(false);
   };
 
-  const tabs: { id: AdminTab; label: string; icon: any }[] = [
+  const tabs: { id: AdminTab; label: string; icon: typeof Shield }[] = [
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'routes', label: 'Routes', icon: Route },
     { id: 'buses', label: 'Buses', icon: Bus },
@@ -118,8 +167,42 @@ function AdminContent() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-20 right-4 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
+        <div className="fixed top-24 right-4 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4" /> {toast}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-slide-up">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Delete {deleteConfirm.type === 'route' ? 'Route' : 'Bus'}?</h3>
+              <p className="text-slate-500 font-medium text-sm">
+                Are you sure you want to delete <span className="font-bold text-slate-700">{deleteConfirm.name}</span>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex bg-gray-50 border-t border-gray-100 p-3 gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-gray-200 transition-colors"
+                disabled={deleteId !== null}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteConfirm.type === 'route' ? handleDeleteRoute : handleDeleteBus}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-2 disabled:bg-red-400"
+                disabled={deleteId !== null}
+              >
+                {deleteId !== null ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -135,12 +218,15 @@ function AdminContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 bg-gray-100 border border-gray-200 rounded-2xl p-2 mb-8 overflow-x-auto shadow-inner no-scrollbar">
+      <div className="relative mb-8">
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none md:hidden rounded-r-2xl" />
+        <div className="flex gap-2 bg-gray-100 border border-gray-200 rounded-2xl p-2 overflow-x-auto shadow-inner no-scrollbar snap-x">
+
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-base font-black transition-all whitespace-nowrap flex-shrink-0 ${
+            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-base font-black transition-all whitespace-nowrap flex-shrink-0 snap-center ${
               tab === id 
                 ? 'bg-[#004892] text-white shadow-md scale-[1.02]' 
                 : 'bg-white/50 text-slate-500 hover:text-[#004892] hover:bg-white'
@@ -150,6 +236,7 @@ function AdminContent() {
             {label}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Overview Tab */}
@@ -164,10 +251,11 @@ function AdminContent() {
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                  <Icon className={`w-8 h-8 ${stat.color} mb-3`} />
-                  <p className="text-3xl font-black text-slate-900">{stat.value}</p>
-                  <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mt-1">{stat.label}</p>
+                <div key={stat.label} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                  <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${stat.color.replace('text-', 'bg-')}/5 -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-500`} />
+                  <Icon className={`w-8 h-8 ${stat.color} mb-3 relative z-10`} />
+                  <p className="text-3xl font-black text-slate-900 relative z-10">{stat.value}</p>
+                  <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider mt-1 relative z-10">{stat.label}</p>
                 </div>
               );
             })}
@@ -178,17 +266,17 @@ function AdminContent() {
               <Users className="w-5 h-5 text-[#004892]" /> Quick Broadcast
             </h3>
             <p className="text-slate-500 font-medium text-sm mb-4">Send an urgent message to all students right now.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
-                value={alertMsg}
-                onChange={(e) => setAlertMsg(e.target.value)}
+                value={overviewAlertMsg}
+                onChange={(e) => setOverviewAlertMsg(e.target.value)}
                 placeholder="Type your message..."
                 className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FABE15]/50 focus:ring-1 focus:ring-[#FABE15]/50"
               />
               <button
-                onClick={handleBroadcast}
-                disabled={!alertMsg || saving}
-                className="px-6 py-3 bg-[#FABE15] hover:bg-[#e0ab13] disabled:bg-gray-200 disabled:text-gray-400 text-slate-900 font-bold rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                onClick={() => handleBroadcast(overviewAlertMsg, 'info', '')}
+                disabled={!overviewAlertMsg || saving}
+                className="px-6 py-3 bg-[#FABE15] hover:bg-[#e0ab13] disabled:bg-gray-200 disabled:text-gray-400 text-slate-900 font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
               >
                 <Send className="w-4 h-4" /> Send
               </button>
@@ -206,6 +294,9 @@ function AdminContent() {
               <Plus className="w-5 h-5 text-[#004892]" />
               {editingRoute ? 'Edit Route' : 'Add New Route'}
             </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Route changes save directly to Firestore and update student screens automatically.
+            </p>
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <input
                 placeholder="Route Name"
@@ -236,10 +327,10 @@ function AdminContent() {
               <button
                 onClick={handleSaveRoute}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 bg-[#004892] hover:bg-[#003870] disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-sm"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#004892] hover:bg-[#003870] disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-sm"
               >
                 <Save className="w-4 h-4" />
-                {editingRoute ? 'Update Route' : 'Add Route'}
+                {saving ? 'Saving...' : editingRoute ? 'Update Route' : 'Add Route'}
               </button>
               {editingRoute && (
                 <button
@@ -285,7 +376,7 @@ function AdminContent() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteRoute(route.id)}
+                    onClick={() => setDeleteConfirm({ type: 'route', id: route.id, name: route.name })}
                     className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -300,6 +391,46 @@ function AdminContent() {
       {/* Buses Tab */}
       {tab === 'buses' && (
         <div className="space-y-6">
+          {/* Add Bus Form */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <h3 className="text-slate-900 font-bold mb-4 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-indigo-600" /> Add New Bus
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <input
+                placeholder="Bus Number (e.g. PU-05)"
+                value={newBus.busNumber}
+                onChange={(e) => setNewBus({...newBus, busNumber: e.target.value})}
+                className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-medium"
+              />
+              <input
+                placeholder="Assigned Route ID (e.g. route-1)"
+                value={newBus.routeId}
+                onChange={(e) => setNewBus({...newBus, routeId: e.target.value})}
+                className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-medium"
+              />
+              <input
+                placeholder="Driver Name"
+                value={newBus.driverName}
+                onChange={(e) => setNewBus({...newBus, driverName: e.target.value})}
+                className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-medium"
+              />
+              <input
+                placeholder="Driver Phone"
+                value={newBus.driverPhone}
+                onChange={(e) => setNewBus({...newBus, driverPhone: e.target.value})}
+                className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-medium"
+              />
+            </div>
+            <button
+              onClick={handleAddBus}
+              disabled={saving || !newBus.busNumber || !newBus.routeId || !newBus.driverName}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-sm"
+            >
+              <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Add Bus'}
+            </button>
+          </div>
+
           <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
             <h3 className="text-slate-900 font-bold mb-4 flex items-center gap-2">
               <Bus className="w-5 h-5 text-indigo-600" /> Update Bus Location
@@ -331,9 +462,9 @@ function AdminContent() {
             <button
               onClick={handleUpdateBusLoc}
               disabled={saving || !editBusId}
-              className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 text-white font-bold rounded-xl transition-all shadow-sm"
             >
-              <Save className="w-4 h-4" /> Update Location
+              <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Update Location'}
             </button>
           </div>
 
@@ -363,13 +494,20 @@ function AdminContent() {
                     {bus.isActive ? 'Active' : 'Parked'}
                   </span>
                   <button
-                    onClick={() => updateBus(bus.id, { isActive: !bus.isActive })}
+                    onClick={async () => {
+                      try {
+                        await updateBus(bus.id, { isActive: !bus.isActive });
+                        showToast(`Bus ${!bus.isActive ? 'activated' : 'parked'}.`);
+                      } catch (error) {
+                        showToast('Error: ' + getErrorMessage(error));
+                      }
+                    }}
                     className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-transparent hover:border-indigo-200"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => { if (confirm('Delete this bus?')) deleteBus(bus.id); }}
+                    onClick={() => setDeleteConfirm({ type: 'bus', id: bus.id, name: bus.busNumber })}
                     className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-200"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -415,11 +553,11 @@ function AdminContent() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 resize-none mb-4 font-medium"
             />
             <button
-              onClick={handleBroadcast}
+              onClick={() => handleBroadcast(alertMsg, alertType, alertBusNum)}
               disabled={!alertMsg || saving}
-              className="flex items-center gap-2 px-6 py-3 bg-[#FABE15] hover:bg-[#e0ab13] disabled:bg-gray-300 disabled:text-gray-500 text-slate-900 font-black rounded-xl transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-[#FABE15] hover:bg-[#e0ab13] disabled:bg-gray-300 disabled:text-gray-500 text-slate-900 font-black rounded-xl transition-all shadow-sm"
             >
-              <Send className="w-4 h-4" /> Broadcast Alert
+              <Send className="w-4 h-4" /> {saving ? 'Broadcasting...' : 'Broadcast Alert'}
             </button>
           </div>
 
@@ -441,7 +579,14 @@ function AdminContent() {
                   <p className="text-slate-900 font-medium text-sm">{alert.message}</p>
                 </div>
                 <button
-                  onClick={() => deactivateAlert(alert.id)}
+                  onClick={async () => {
+                    try {
+                      await deactivateAlert(alert.id);
+                      showToast('Alert deactivated.');
+                    } catch (error) {
+                      showToast('Error: ' + getErrorMessage(error));
+                    }
+                  }}
                   className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-200"
                   title="Deactivate alert"
                 >

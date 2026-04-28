@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, Bus, RefreshCw, Filter } from 'lucide-react';
+import { Search, Bus, Filter } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 import AlertBanner from '@/components/AlertBanner';
 import RouteCard from '@/components/RouteCard';
@@ -9,10 +9,9 @@ import { subscribeRoutes } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { BusRoute } from '@/lib/types';
 
-// Fallback demo routes for when Firestore is empty
 const DEMO_ROUTES: BusRoute[] = [
   {
-    id: 'route-1', name: 'Route A — City Center', busNumber: 'PU-01', active: true,
+    id: 'route-1', name: 'Route A - City Center', busNumber: 'PU-01', active: true,
     departureTime: '07:30 AM', returnTime: '05:30 PM',
     createdAt: new Date(), updatedAt: new Date(),
     stops: [
@@ -24,7 +23,7 @@ const DEMO_ROUTES: BusRoute[] = [
     ],
   },
   {
-    id: 'route-2', name: 'Route B — Vaishali Nagar', busNumber: 'PU-02', active: true,
+    id: 'route-2', name: 'Route B - Vaishali Nagar', busNumber: 'PU-02', active: true,
     departureTime: '07:45 AM', returnTime: '05:15 PM',
     createdAt: new Date(), updatedAt: new Date(),
     stops: [
@@ -35,7 +34,7 @@ const DEMO_ROUTES: BusRoute[] = [
     ],
   },
   {
-    id: 'route-3', name: 'Route C — Malviya Nagar', busNumber: 'PU-07', active: false,
+    id: 'route-3', name: 'Route C - Malviya Nagar', busNumber: 'PU-07', active: false,
     departureTime: '08:00 AM', returnTime: '05:00 PM',
     createdAt: new Date(), updatedAt: new Date(),
     stops: [
@@ -45,7 +44,7 @@ const DEMO_ROUTES: BusRoute[] = [
     ],
   },
   {
-    id: 'route-4', name: 'Route D — Sodala Express', busNumber: 'PU-04', active: true,
+    id: 'route-4', name: 'Route D - Sodala Express', busNumber: 'PU-04', active: true,
     departureTime: '07:15 AM', returnTime: '05:45 PM',
     createdAt: new Date(), updatedAt: new Date(),
     stops: [
@@ -59,27 +58,31 @@ const DEMO_ROUTES: BusRoute[] = [
 
 function RoutesContent() {
   const { profile } = useAuth();
-  const [routes, setRoutes] = useState<BusRoute[]>(DEMO_ROUTES);
+  const [routes, setRoutes] = useState<BusRoute[] | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = subscribeRoutes((fbRoutes) => {
       setRoutes(fbRoutes.length > 0 ? fbRoutes : DEMO_ROUTES);
-      setLoading(false);
     });
-    setLoading(false);
     return () => unsub();
   }, []);
 
-  const filtered = routes.filter((r) => {
+  const visibleRoutes = routes ?? DEMO_ROUTES;
+  const loading = routes === null;
+
+  const filtered = visibleRoutes.filter((route) => {
     const matchSearch =
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.busNumber.toLowerCase().includes(search.toLowerCase()) ||
-      r.stops.some((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+      route.name.toLowerCase().includes(search.toLowerCase()) ||
+      route.busNumber.toLowerCase().includes(search.toLowerCase()) ||
+      route.stops.some((stop) => stop.name.toLowerCase().includes(search.toLowerCase()));
+
     const matchFilter =
-      filter === 'all' || (filter === 'active' && r.active) || (filter === 'inactive' && !r.active);
+      filter === 'all' ||
+      (filter === 'active' && route.active) ||
+      (filter === 'inactive' && !route.active);
+
     return matchSearch && matchFilter;
   });
 
@@ -87,13 +90,11 @@ function RoutesContent() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <AlertBanner />
 
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 mb-1">Bus Routes</h1>
-        <p className="text-slate-500 font-medium text-sm">{routes.length} routes · Updated daily</p>
+        <p className="text-slate-500 font-medium text-sm">{visibleRoutes.length} routes | Updated daily</p>
       </div>
 
-      {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -107,39 +108,37 @@ function RoutesContent() {
         </div>
         <div className="flex items-center gap-1 bg-white border border-gray-300 shadow-sm rounded-xl p-1.5">
           <Filter className="w-4 h-4 text-slate-400 ml-2 mr-1" />
-          {(['all', 'active', 'inactive'] as const).map((f) => (
+          {(['all', 'active', 'inactive'] as const).map((mode) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={mode}
+              onClick={() => setFilter(mode)}
               className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all capitalize ${
-                filter === f ? 'bg-[#004892] text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
+                filter === mode ? 'bg-[#004892] text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
               }`}
             >
-              {f}
+              {mode}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-xl p-3 text-center border border-gray-200 shadow-sm">
-          <p className="text-xl font-black text-slate-900">{routes.length}</p>
+          <p className="text-xl font-black text-slate-900">{visibleRoutes.length}</p>
           <p className="text-slate-500 font-bold text-[10px] uppercase tracking-wider">Total Routes</p>
         </div>
         <div className="bg-white rounded-xl p-3 text-center border border-gray-200 shadow-sm">
-          <p className="text-xl font-black text-green-600">{routes.filter((r) => r.active).length}</p>
+          <p className="text-xl font-black text-green-600">{visibleRoutes.filter((route) => route.active).length}</p>
           <p className="text-slate-500 font-bold text-[10px] uppercase tracking-wider">Active</p>
         </div>
         <div className="bg-white rounded-xl p-3 text-center border border-gray-200 shadow-sm">
           <p className="text-xl font-black text-[#004892]">
-            {routes.reduce((acc, r) => acc + r.stops.length, 0)}
+            {visibleRoutes.reduce((acc, route) => acc + route.stops.length, 0)}
           </p>
           <p className="text-slate-500 font-bold text-[10px] uppercase tracking-wider">Total Stops</p>
         </div>
       </div>
 
-      {/* Results */}
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (

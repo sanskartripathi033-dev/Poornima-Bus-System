@@ -8,7 +8,8 @@ import { PUUser } from '@/lib/types';
 interface AuthContextType {
   user: User | null;
   profile: PUUser | null;
-  loading: boolean;
+  loading: boolean;        // true only while Firebase resolves the persisted auth session
+  profileLoading: boolean; // true while the Firestore user profile is being fetched
   isAdmin: boolean;
 }
 
@@ -16,39 +17,40 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  profileLoading: true,
   isAdmin: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<PUUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);          // auth state
+  const [profileLoading, setProfileLoading] = useState(true); // profile fetch
 
   useEffect(() => {
     let profileUnsub: (() => void) | undefined;
+
     const authUnsub = onAuthChange((firebaseUser: User | null) => {
       setUser(firebaseUser);
+      setLoading(false); // ✅ Auth state is now known — stop blocking the guard
+
       if (profileUnsub) {
         profileUnsub();
         profileUnsub = undefined;
       }
-      if (firebaseUser) {
-        // Safety timeout increased to 15 seconds for slow rural connections
-        const timeout = setTimeout(() => {
-          console.warn("Profile fetch timeout reached (15s)");
-          setLoading(false);
-        }, 15000);
 
+      if (firebaseUser) {
+        setProfileLoading(true);
         profileUnsub = subscribeUserProfile(firebaseUser.uid, (p: PUUser | null) => {
-          clearTimeout(timeout);
           setProfile(p);
-          setLoading(false);
+          setProfileLoading(false);
         });
       } else {
         setProfile(null);
-        setLoading(false);
+        setProfileLoading(false);
       }
     });
+
     return () => {
       authUnsub();
       if (profileUnsub) profileUnsub();
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         profile,
         loading,
+        profileLoading,
         isAdmin: profile?.role === 'admin',
       }}
     >

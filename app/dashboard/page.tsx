@@ -8,27 +8,31 @@ import AuthGuard from '@/components/AuthGuard';
 import AlertBanner from '@/components/AlertBanner';
 import DigitalPassCard from '@/components/DigitalPassCard';
 import { subscribeRoute } from '@/lib/firestore';
-import { BusRoute } from '@/lib/types';
+import { BusRoute, BusStop } from '@/lib/types';
 
 function DashboardContent() {
   const { profile, loading } = useAuth();
-  const [route, setRoute] = useState<BusRoute | null>(null);
-  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [routeState, setRouteState] = useState<{
+    routeId: string | null;
+    route: BusRoute | null;
+  }>({ routeId: null, route: null });
+
+  const currentRouteId = profile?.routeId || null;
+  const route = routeState.routeId === currentRouteId ? routeState.route : null;
+  const loadingRoute = Boolean(currentRouteId) && routeState.routeId !== currentRouteId;
 
   useEffect(() => {
-    if (profile?.routeId) {
-      setLoadingRoute(true);
-      const unsub = subscribeRoute(profile.routeId, (r: BusRoute | null) => {
-        setRoute(r);
-        setLoadingRoute(false);
-      });
-      return () => unsub();
-    } else {
-      setRoute(null);
+    if (!currentRouteId) {
+      return;
     }
-  }, [profile?.routeId]);
 
-  // Still loading auth / profile from Firestore
+    const unsub = subscribeRoute(currentRouteId, (nextRoute: BusRoute | null) => {
+      setRouteState({ routeId: currentRouteId, route: nextRoute });
+    });
+
+    return () => unsub();
+  }, [currentRouteId]);
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
@@ -43,7 +47,6 @@ function DashboardContent() {
     );
   }
 
-  // Auth resolved but no Firestore profile found
   if (!profile) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
@@ -63,25 +66,20 @@ function DashboardContent() {
 
   const quickActions = [
     { href: '/tracking', icon: MapPin, label: 'Track My Bus', desc: 'See live location', color: 'from-blue-600 to-blue-500' },
-    { href: '/routes', icon: Route, label: 'View Routes', desc: 'All bus routes & stops', color: 'from-indigo-600 to-indigo-500' },
+    { href: '/routes', icon: Route, label: 'View Routes', desc: 'All bus routes and stops', color: 'from-indigo-600 to-indigo-500' },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-      {/* Alerts */}
       <AlertBanner />
 
-      {/* Header */}
       <div className="mb-8">
         <p className="text-slate-500 text-sm font-medium mb-1">Good {getGreeting()},</p>
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900">
-          {profile.name} 👋
-        </h1>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900">{profile.name}</h1>
         <p className="text-slate-500 text-sm mt-1">{profile.email}</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-8">
-        {/* Left: Digital Pass */}
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <QrCode className="w-5 h-5 text-[#004892]" />
@@ -93,9 +91,7 @@ function DashboardContent() {
           </p>
         </div>
 
-        {/* Right: Info & Actions */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Route Info Card */}
           <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-slate-900 font-bold flex items-center gap-2">
@@ -132,10 +128,10 @@ function DashboardContent() {
                   <div className="flex flex-wrap gap-2">
                     {route.stops
                       .slice()
-                      .sort((a: any, b: any) => a.order - b.order)
-                      .map((s: any) => (
-                        <span key={s.id} className="text-xs font-medium bg-[#E9F2FF] border border-[#004892]/20 text-[#004892] rounded-lg px-2.5 py-1">
-                          {s.name}
+                      .sort((a: BusStop, b: BusStop) => a.order - b.order)
+                      .map((stop: BusStop) => (
+                        <span key={stop.id} className="text-xs font-medium bg-[#E9F2FF] border border-[#004892]/20 text-[#004892] rounded-lg px-2.5 py-1">
+                          {stop.name}
                         </span>
                       ))}
                   </div>
@@ -151,7 +147,6 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* Quick Actions */}
           <div>
             <h3 className="text-slate-900 font-bold mb-3 flex items-center gap-2">
               <Bell className="w-5 h-5 text-[#FABE15]" />
@@ -179,7 +174,6 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Student ID Badge */}
           <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -189,7 +183,7 @@ function DashboardContent() {
               <div className="text-right">
                 <p className="text-slate-500 font-bold text-[10px] uppercase tracking-wider mb-1">Account Type</p>
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-[#004892] bg-[#E9F2FF] border border-[#004892]/20 rounded-lg px-2.5 py-1">
-                  {profile.role === 'admin' ? '🔑 Admin' : '🎓 Student'}
+                  {profile.role === 'admin' ? 'Admin' : 'Student'}
                 </span>
               </div>
             </div>

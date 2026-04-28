@@ -23,23 +23,19 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
   });
 
   useEffect(() => {
-    if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, qrData, {
-        width: 130,
-        margin: 1,
-        color: {
-          dark: '#004892',
-          light: '#ffffff',
-        },
-      });
+    if (!canvasRef.current) {
+      return;
     }
-  }, [qrData]);
 
-  const today = new Date().toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+    QRCode.toCanvas(canvasRef.current, qrData, {
+      width: 130,
+      margin: 1,
+      color: {
+        dark: '#004892',
+        light: '#ffffff',
+      },
+    });
+  }, [qrData]);
 
   const validUntil = new Date();
   validUntil.setMonth(validUntil.getMonth() + 6);
@@ -51,15 +47,12 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
 
   return (
     <div className="relative w-full mx-auto sm:max-w-md cursor-pointer group active:scale-[0.98] transition-transform duration-200">
-      {/* Subtle Glow behind card */}
       <div className="absolute -inset-2 bg-gradient-to-r from-[#004892]/20 to-[#FABE15]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all" />
 
       <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
-        {/* Card Header (Poornima Blue) */}
         <div className="bg-[#004892] px-6 pt-6 pb-4 relative">
-          {/* Subtle pattern or gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-          
+
           <div className="relative flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
@@ -83,7 +76,6 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
           </div>
         </div>
 
-        {/* Decorative divider (ticket punch effect) */}
         <div className="relative bg-white h-3">
           <div className="absolute -top-1.5 left-0 right-0 flex justify-between px-5 z-10">
             {Array.from({ length: 28 }).map((_, i) => (
@@ -92,10 +84,8 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
           </div>
         </div>
 
-        {/* Card Body */}
         <div className="bg-white px-6 pb-6 pt-2">
           <div className="flex gap-4">
-            {/* Info */}
             <div className="flex-1 space-y-3">
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Student ID</p>
@@ -119,7 +109,6 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
               </div>
             </div>
 
-            {/* QR Code */}
             <div className="flex flex-col items-center justify-center border-l border-dashed border-gray-200 pl-4 py-2">
               <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
                 <canvas ref={canvasRef} className="rounded-lg" />
@@ -129,7 +118,6 @@ export default function DigitalPassCard({ profile, routeName }: DigitalPassCardP
           </div>
         </div>
 
-        {/* Bottom accent */}
         <div className="h-1.5 bg-gradient-to-r from-[#004892] via-blue-500 to-[#FABE15]" />
       </div>
     </div>

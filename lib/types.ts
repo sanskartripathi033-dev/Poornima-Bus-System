@@ -1,6 +1,6 @@
 // TypeScript interfaces for PU-BusLink
 
-export type UserRole = 'student' | 'admin';
+export type UserRole = 'student' | 'admin' | 'driver';
 
 export interface PUUser {
   uid: string;
@@ -8,6 +8,8 @@ export interface PUUser {
   studentId: string;
   email: string;
   routeId: string;
+  stopId?: string; // Optional: specific stop assignment
+  busId?: string;  // Optional: driver's assigned bus
   role: UserRole;
   createdAt: Date;
 }

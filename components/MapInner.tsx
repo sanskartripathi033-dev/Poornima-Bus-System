@@ -5,9 +5,13 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Bus } from '@/lib/types';
 
-// Fix Leaflet's default icon path issue with webpack
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
+const defaultIconClass = L.Icon.Default as unknown as {
+  prototype: { _getIconUrl?: unknown };
+  mergeOptions: typeof L.Icon.Default.mergeOptions;
+};
+
+delete defaultIconClass.prototype._getIconUrl;
+defaultIconClass.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -71,21 +75,22 @@ export default function MapInner({ buses, center, zoom }: MapInnerProps) {
       zoomControl: true,
     });
 
-    // Dark-themed tile layer
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20,
     }).addTo(map);
 
-    // PU Campus marker
     L.marker(center, { icon: puIcon })
       .addTo(map)
-      .bindPopup(`
-        <div style="background:#0d1f3e;color:white;padding:8px 12px;border-radius:8px;min-width:150px;">
-          <b style="font-size:14px;">🏫 Poornima University</b>
-          <p style="margin:4px 0 0;font-size:11px;color:#93c5fd;">Jaipur, Rajasthan</p>
-        </div>
-      `, { className: 'custom-popup' });
+      .bindPopup(
+        `
+          <div style="background:#0d1f3e;color:white;padding:8px 12px;border-radius:8px;min-width:150px;">
+            <b style="font-size:14px;">Poornima University</b>
+            <p style="margin:4px 0 0;font-size:11px;color:#93c5fd;">Jaipur, Rajasthan</p>
+          </div>
+        `,
+        { className: 'custom-popup' }
+      );
 
     mapRef.current = map;
 
@@ -93,16 +98,14 @@ export default function MapInner({ buses, center, zoom }: MapInnerProps) {
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [center, zoom]);
 
-  // Update bus markers when buses data changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // Remove markers for buses no longer present
     Object.keys(markersRef.current).forEach((id) => {
-      if (!buses.find((b) => b.id === id)) {
+      if (!buses.find((bus) => bus.id === id)) {
         markersRef.current[id].remove();
         delete markersRef.current[id];
       }
@@ -110,31 +113,26 @@ export default function MapInner({ buses, center, zoom }: MapInnerProps) {
 
     buses.forEach((bus) => {
       if (!bus.lat || !bus.lng) return;
-      const pos: [number, number] = [bus.lat, bus.lng];
+
+      const position: [number, number] = [bus.lat, bus.lng];
       const popup = `
         <div style="background:#0d1f3e;color:white;padding:8px 12px;border-radius:8px;min-width:160px;">
-          <b style="font-size:13px;">🚌 Bus ${bus.busNumber}</b>
+          <b style="font-size:13px;">Bus ${bus.busNumber}</b>
           <p style="margin:3px 0;font-size:11px;color:#93c5fd;">Driver: ${bus.driverName}</p>
-          <p style="margin:3px 0;font-size:10px;color:#64748b;">
-            Active: ${bus.isActive ? '✅ Yes' : '❌ No'}
-          </p>
+          <p style="margin:3px 0;font-size:10px;color:#64748b;">Active: ${bus.isActive ? 'Yes' : 'No'}</p>
         </div>
       `;
 
       if (markersRef.current[bus.id]) {
-        markersRef.current[bus.id].setLatLng(pos);
+        markersRef.current[bus.id].setLatLng(position);
         markersRef.current[bus.id].setPopupContent(popup);
       } else {
-        const marker = L.marker(pos, { icon: busIcon }).addTo(map).bindPopup(popup, { className: 'custom-popup' });
-        markersRef.current[bus.id] = marker;
+        markersRef.current[bus.id] = L.marker(position, { icon: busIcon })
+          .addTo(map)
+          .bindPopup(popup, { className: 'custom-popup' });
       }
     });
   }, [buses]);
 
-  return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%', minHeight: '400px', zIndex: 0 }}
-    />
-  );
+  return <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '400px', zIndex: 0 }} />;
 }

@@ -1,14 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bus, Eye, EyeOff, Mail, Lock, User, Hash, Route, AlertCircle } from 'lucide-react';
 import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 
 type Tab = 'signin' | 'register';
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Authentication failed.';
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState<Tab>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +25,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (!authLoading && !loading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, loading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -26,12 +38,13 @@ export default function LoginPage() {
     try {
       if (tab === 'signin') {
         await signInWithEmail(email, password);
+        router.replace('/dashboard');
       } else {
         await registerWithEmail(email, password, name, studentId, routeId);
+        router.replace('/register-success');
       }
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed.');
+    } catch (error) {
+      setError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -42,9 +55,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Google sign-in failed.');
+      router.replace('/dashboard');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Google sign-in failed.');
     } finally {
       setLoading(false);
     }

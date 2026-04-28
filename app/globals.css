@@ -19,8 +19,8 @@
   --color-pu-text:      #333333;
 
   /* Font stacks */
-  --font-family-sans:    'Poppins', system-ui, sans-serif;
-  --font-family-display: 'Playfair Display', Georgia, serif;
+  --font-family-sans:    "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+  --font-family-display: Georgia, "Times New Roman", serif;
 }
 
 /* ── Base ─────────────────────────────────────────────── */
@@ -40,7 +40,7 @@ html {
 body {
   background-color: var(--color-pu-offwhite, #FAFAFA);
   color: var(--color-pu-text, #333333);
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-family-sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -124,7 +124,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 16px;
   cursor: pointer;
   border: none;
@@ -157,7 +157,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 16px;
   cursor: pointer;
   border: none;
@@ -191,7 +191,7 @@ body {
   padding: 14px 16px 14px 46px;
   color: #1F2937;
   width: 100%;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 16px;
   transition: all 0.2s ease;
   -webkit-appearance: none;

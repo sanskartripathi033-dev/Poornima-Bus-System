@@ -31,6 +31,8 @@ export async function getRoute(id: string): Promise<BusRoute | null> {
 export function subscribeRoute(id: string, callback: (route: BusRoute | null) => void): Unsubscribe {
   return onSnapshot(doc(db, 'routes', id), (snap) => {
     callback(snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null);
+  }, (error) => {
+    console.error("Error subscribing to route:", error);
   });
 }
 
@@ -53,6 +55,8 @@ export async function deleteRoute(id: string) {
 export function subscribeRoutes(callback: (routes: BusRoute[]) => void): Unsubscribe {
   return onSnapshot(collection(db, 'routes'), (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusRoute)));
+  }, (error) => {
+    console.error("Error subscribing to routes:", error);
   });
 }
 
@@ -82,6 +86,8 @@ export async function deleteBus(id: string) {
 export function subscribeBuses(callback: (buses: Bus[]) => void): Unsubscribe {
   return onSnapshot(collection(db, 'buses'), (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Bus)));
+  }, (error) => {
+    console.error("Error subscribing to buses:", error);
   });
 }
 
@@ -105,5 +111,7 @@ export function subscribeAlerts(callback: (alerts: BusAlert[]) => void): Unsubsc
   const q = query(collection(db, 'alerts'), where('active', '==', true), orderBy('createdAt', 'desc'));
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusAlert)));
+  }, (error) => {
+    console.error("Error subscribing to alerts:", error);
   });
 }

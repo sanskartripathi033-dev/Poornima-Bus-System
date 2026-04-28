@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Bus, MapPin, Route, LayoutDashboard, Shield, Menu, X, LogOut, User } from 'lucide-react';
+import { Bus, MapPin, Route, LayoutDashboard, Shield, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logOut } from '@/lib/auth';
 
@@ -18,16 +18,16 @@ export default function Navbar() {
   const { user, profile, isAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false); // Used for profile dropdown on mobile
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logOut();
     router.push('/login');
   };
 
-  const visibleLinks = navLinks.filter((l) => {
-    if (!l.auth || !user) return false;
-    if (l.adminOnly && !isAdmin) return false;
+  const visibleLinks = navLinks.filter((link) => {
+    if (!link.auth || !user) return false;
+    if (link.adminOnly && !isAdmin) return false;
     return true;
   });
 
@@ -35,7 +35,6 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
             <div className="w-9 h-9 rounded-lg bg-[#004892] flex items-center justify-center shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
               <Bus className="w-5 h-5 text-white" />
@@ -46,7 +45,6 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav */}
           {user && (
             <div className="hidden md:flex items-center gap-1">
               {visibleLinks.map(({ href, label, icon: Icon }) => {
@@ -69,11 +67,9 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Right side */}
           <div className="flex items-center gap-3">
             {user ? (
               <div className="relative">
-                {/* Desktop Profile Info & Logout */}
                 <div className="hidden md:flex items-center gap-3">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200">
                     <User className="w-4 h-4 text-slate-500" />
@@ -95,7 +91,6 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                {/* Mobile Profile Trigger */}
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   className="md:hidden w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 active:scale-95 transition-transform"
@@ -103,7 +98,6 @@ export default function Navbar() {
                   <User className="w-5 h-5 text-slate-600" />
                 </button>
 
-                {/* Mobile Profile Dropdown */}
                 {menuOpen && (
                   <>
                     <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMenuOpen(false)} />
@@ -142,7 +136,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* --- Mobile Bottom Navigation Bar --- */}
       {user && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
           <div className="flex justify-around items-center h-16 px-2">
