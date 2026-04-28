@@ -36,7 +36,17 @@ export function subscribeRoute(id: string, callback: (route: BusRoute | null) =>
   const startSub = () => {
     if (isUnsubscribed) return;
     currentUnsub = onSnapshot(doc(db, 'routes', id), (snap) => {
-      callback(snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null);
+      if (!snap.exists()) {
+        callback(null);
+      } else {
+        const data = snap.data() as Record<string, unknown>;
+        callback({
+          id: snap.id,
+          ...data,
+          createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as { toDate?: () => Date })?.toDate?.() || data.updatedAt || new Date(),
+        } as BusRoute);
+      }
     }, (error) => {
       console.error("Error subscribing to route, retrying:", error);
       if (currentUnsub) currentUnsub();
@@ -76,7 +86,15 @@ export function subscribeRoutes(callback: (routes: BusRoute[]) => void): Unsubsc
   const startSub = () => {
     if (isUnsubscribed) return;
     currentUnsub = onSnapshot(collection(db, 'routes'), (snap) => {
-      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusRoute)));
+      callback(snap.docs.map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          id: d.id,
+          ...data,
+          createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as { toDate?: () => Date })?.toDate?.() || data.updatedAt || new Date(),
+        } as BusRoute;
+      }));
     }, (error) => {
       console.error("Error subscribing to routes, retrying:", error);
       if (currentUnsub) currentUnsub();
@@ -123,7 +141,14 @@ export function subscribeBuses(callback: (buses: Bus[]) => void): Unsubscribe {
   const startSub = () => {
     if (isUnsubscribed) return;
     currentUnsub = onSnapshot(collection(db, 'buses'), (snap) => {
-      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Bus)));
+      callback(snap.docs.map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          id: d.id,
+          ...data,
+          lastUpdated: (data.lastUpdated as { toDate?: () => Date })?.toDate?.() || data.lastUpdated || new Date(),
+        } as Bus;
+      }));
     }, (error) => {
       console.error("Error subscribing to buses, retrying:", error);
       if (currentUnsub) currentUnsub();
@@ -164,7 +189,14 @@ export function subscribeAlerts(callback: (alerts: BusAlert[]) => void): Unsubsc
     if (isUnsubscribed) return;
     const q = query(collection(db, 'alerts'), where('active', '==', true), orderBy('createdAt', 'desc'));
     currentUnsub = onSnapshot(q, (snap) => {
-      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusAlert)));
+      callback(snap.docs.map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          id: d.id,
+          ...data,
+          createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() || data.createdAt || new Date(),
+        } as BusAlert;
+      }));
     }, (error) => {
       console.error("Error subscribing to alerts, retrying:", error);
       if (currentUnsub) currentUnsub();

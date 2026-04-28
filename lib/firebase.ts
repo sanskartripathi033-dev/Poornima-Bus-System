@@ -1,10 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import {
   browserLocalPersistence,
-  browserPopupRedirectResolver,
-  browserSessionPersistence,
-  getAuth,
-  indexedDBLocalPersistence,
   initializeAuth,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -30,6 +26,10 @@ const firebaseConfig = {
 // Prevent multiple Firebase app initializations (important for Next.js HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const auth = getAuth(app);
+// Initialize auth with local persistence to maintain session across page refreshes
+export const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence,
+  popupRedirectResolver: undefined,
+});
 export const db = getFirestore(app);
 export default app;
