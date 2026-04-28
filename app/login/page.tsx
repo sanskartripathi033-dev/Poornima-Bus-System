@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bus, Eye, EyeOff, Mail, Lock, User, Hash, Route, AlertCircle } from 'lucide-react';
+import { Bus, Eye, EyeOff, Mail, Lock, User, Hash, Route, AlertCircle, Loader2 } from 'lucide-react';
 import { signInWithEmail, signInWithGoogle, registerWithEmail } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 
@@ -14,7 +14,7 @@ function getErrorMessage(error: unknown) {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const [tab, setTab] = useState<Tab>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,46 +22,72 @@ export default function LoginPage() {
   const [studentId, setStudentId] = useState('');
   const [routeId, setRouteId] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Redirect once auth AND profile are both resolved
   useEffect(() => {
-    if (!authLoading && !loading && user) {
+    if (authLoading) return; // Still resolving auth session
+    if (!user) return;       // Not signed in
+
+    // Auth is resolved and user is signed in — wait for profile
+    if (profileLoading) return;
+
+    // Profile loaded: redirect based on role
+    if (profile?.role === 'admin') {
+      router.replace('/admin');
+    } else {
       router.replace('/dashboard');
     }
-  }, [user, authLoading, loading, router]);
+  }, [user, authLoading, profile, profileLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setFormLoading(true);
     try {
       if (tab === 'signin') {
         await signInWithEmail(email, password);
-        router.replace('/dashboard');
+        // Do NOT call router.replace here — the useEffect above will redirect
+        // once the auth state + profile are fully resolved.
       } else {
         await registerWithEmail(email, password, name, studentId, routeId);
         router.replace('/register-success');
       }
     } catch (error) {
       setError(getErrorMessage(error));
-    } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
+    // NOTE: Do not reset formLoading on success — the redirect will unmount this page.
+    // Only reset on error (done above inside catch).
   };
 
   const handleGoogle = async () => {
     setError('');
-    setLoading(true);
+    setFormLoading(true);
     try {
       await signInWithGoogle();
-      router.replace('/dashboard');
+      // useEffect will handle redirect
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Google sign-in failed.');
-    } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
+
+  // Show full-screen spinner while auth session is being restored on page load
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#004892] flex items-center justify-center shadow-lg">
+            <Bus className="w-7 h-7 text-white" />
+          </div>
+          <Loader2 className="w-6 h-6 text-[#004892] animate-spin" />
+          <p className="text-slate-500 text-sm font-medium">Restoring your session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-white">
@@ -77,16 +103,16 @@ export default function LoginPage() {
           <p className="text-[#E9F2FF] opacity-90 max-w-xs leading-relaxed">
             Your smart, secure university bus management platform — tracking, passes, and alerts all in one.
           </p>
-          <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-xs">
+          <div className="mt-12 flex flex-col gap-3 w-full max-w-xs">
             {[
-              { label: 'Active Routes', value: '12+' },
-              { label: 'Daily Students', value: '1200+' },
-              { label: 'Buses Tracked', value: '8' },
-              { label: 'Uptime', value: '99.9%' },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 rounded-xl p-4 text-center border border-white/20 backdrop-blur-sm">
-                <p className="text-2xl font-black text-white">{stat.value}</p>
-                <p className="text-[#E9F2FF] opacity-80 text-xs">{stat.label}</p>
+              { icon: '🚌', text: 'Real-time bus tracking' },
+              { icon: '🎫', text: 'Digital bus pass & QR code' },
+              { icon: '📢', text: 'Instant admin alerts' },
+              { icon: '🗺️', text: 'Live route information' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-left backdrop-blur-sm">
+                <span className="text-xl">{item.icon}</span>
+                <p className="text-white font-semibold text-sm">{item.text}</p>
               </div>
             ))}
           </div>
@@ -123,8 +149,8 @@ export default function LoginPage() {
                 key={t}
                 onClick={() => { setTab(t); setError(''); }}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  tab === t 
-                    ? 'bg-white text-[#004892] shadow-sm border border-gray-200' 
+                  tab === t
+                    ? 'bg-white text-[#004892] shadow-sm border border-gray-200'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -214,10 +240,17 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full btn-navy justify-center py-3.5 text-base shadow-md mt-2"
+              disabled={formLoading}
+              className="w-full btn-navy justify-center py-3.5 text-base shadow-md mt-2 flex items-center gap-2"
             >
-              {loading ? 'Please wait...' : tab === 'signin' ? 'Sign In' : 'Create Account'}
+              {formLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {tab === 'signin' ? 'Signing in...' : 'Creating account...'}
+                </>
+              ) : (
+                tab === 'signin' ? 'Sign In' : 'Create Account'
+              )}
             </button>
           </form>
 
@@ -231,8 +264,8 @@ export default function LoginPage() {
           {/* Google Sign In */}
           <button
             onClick={handleGoogle}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl text-slate-700 font-semibold transition-all shadow-sm"
+            disabled={formLoading}
+            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-60 rounded-xl text-slate-700 font-semibold transition-all shadow-sm"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

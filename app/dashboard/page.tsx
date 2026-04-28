@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Route, Bell, QrCode, RefreshCw, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -11,29 +12,34 @@ import { subscribeRoute } from '@/lib/firestore';
 import { BusRoute, BusStop } from '@/lib/types';
 
 function DashboardContent() {
-  const { profile, loading } = useAuth();
+  const { profile, loading, profileLoading, isAdmin } = useAuth();
+  const router = useRouter();
   const [routeState, setRouteState] = useState<{
     routeId: string | null;
     route: BusRoute | null;
   }>({ routeId: null, route: null });
+
+  // Redirect admins to the admin panel automatically
+  useEffect(() => {
+    if (!loading && !profileLoading && isAdmin) {
+      router.replace('/admin');
+    }
+  }, [loading, profileLoading, isAdmin, router]);
 
   const currentRouteId = profile?.routeId || null;
   const route = routeState.routeId === currentRouteId ? routeState.route : null;
   const loadingRoute = Boolean(currentRouteId) && routeState.routeId !== currentRouteId;
 
   useEffect(() => {
-    if (!currentRouteId) {
-      return;
-    }
-
+    if (!currentRouteId) return;
     const unsub = subscribeRoute(currentRouteId, (nextRoute: BusRoute | null) => {
       setRouteState({ routeId: currentRouteId, route: nextRoute });
     });
-
     return () => unsub();
   }, [currentRouteId]);
 
-  if (loading) {
+  // Show spinner while auth session OR profile is still loading
+  if (loading || profileLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center bg-white m-4 rounded-3xl border border-gray-100 shadow-sm">
         <div className="w-16 h-16 bg-[#E9F2FF] rounded-2xl flex items-center justify-center mb-4">
@@ -138,7 +144,10 @@ function DashboardContent() {
                 </div>
               </div>
             ) : profile.routeId ? (
-              <div className="text-slate-500 text-sm font-medium p-4 bg-gray-50 rounded-xl border border-gray-100">Loading route info...</div>
+              <div className="text-slate-500 text-sm font-medium p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <RefreshCw className="w-4 h-4 animate-spin inline mr-2" />
+                Loading route info...
+              </div>
             ) : (
               <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                 <p className="text-slate-700 font-bold text-sm mb-1">No route assigned yet.</p>
