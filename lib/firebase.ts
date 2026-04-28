@@ -30,25 +30,6 @@ const firebaseConfig = {
 // Prevent multiple Firebase app initializations (important for Next.js HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-const auth = (() => {
-  if (typeof window === 'undefined') {
-    return getAuth(app);
-  }
-
-  try {
-    return initializeAuth(app, {
-      persistence: [
-        indexedDBLocalPersistence,
-        browserLocalPersistence,
-        browserSessionPersistence,
-      ],
-      popupRedirectResolver: browserPopupRedirectResolver,
-    });
-  } catch {
-    return getAuth(app);
-  }
-})();
-
-export { auth };
+export const auth = getAuth(app);
 export const db = getFirestore(app);
 export default app;

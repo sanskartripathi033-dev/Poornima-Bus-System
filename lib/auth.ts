@@ -91,14 +91,38 @@ export async function getUserProfile(uid: string): Promise<PUUser | null> {
 }
 
 export function subscribeUserProfile(uid: string, callback: (profile: PUUser | null) => void): Unsubscribe {
-  return onSnapshot(doc(db, 'users', uid), (snap) => {
+  let isUnsubscribed = false;
+
+  const unsubscribe = onSnapshot(doc(db, 'users', uid), (snap) => {
+    if (isUnsubscribed) return;
     if (!snap.exists()) {
       callback(null);
     } else {
       callback(snap.data() as PUUser);
     }
-  }, (error) => {
-    console.error("Profile sync error:", error);
-    callback(null);
+  }, async (error) => {
+    if (isUnsubscribed) return;
+    console.error("Profile sync error, attempting fallback fetch:", error);
+    // Transient permission errors can happen on refresh.
+    // Fallback to a one-time fetch after a short delay.
+    setTimeout(async () => {
+      if (isUnsubscribed) return;
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          callback(snap.data() as PUUser);
+        } else {
+          callback(null);
+        }
+      } catch (e) {
+        console.error("Fallback fetch failed:", e);
+        callback(null);
+      }
+    }, 1500);
   });
+
+  return () => {
+    isUnsubscribed = true;
+    unsubscribe();
+  };
 }

@@ -29,11 +29,27 @@ export async function getRoute(id: string): Promise<BusRoute | null> {
 }
 
 export function subscribeRoute(id: string, callback: (route: BusRoute | null) => void): Unsubscribe {
-  return onSnapshot(doc(db, 'routes', id), (snap) => {
-    callback(snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null);
-  }, (error) => {
-    console.error("Error subscribing to route:", error);
-  });
+  let isUnsubscribed = false;
+  let retryTimer: NodeJS.Timeout;
+  let currentUnsub: Unsubscribe | null = null;
+
+  const startSub = () => {
+    if (isUnsubscribed) return;
+    currentUnsub = onSnapshot(doc(db, 'routes', id), (snap) => {
+      callback(snap.exists() ? ({ id: snap.id, ...snap.data() } as BusRoute) : null);
+    }, (error) => {
+      console.error("Error subscribing to route, retrying:", error);
+      if (currentUnsub) currentUnsub();
+      retryTimer = setTimeout(startSub, 2000);
+    });
+  };
+  startSub();
+
+  return () => {
+    isUnsubscribed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    if (currentUnsub) currentUnsub();
+  };
 }
 
 export async function addRoute(data: Omit<BusRoute, 'id' | 'createdAt' | 'updatedAt'>) {
@@ -53,11 +69,27 @@ export async function deleteRoute(id: string) {
 }
 
 export function subscribeRoutes(callback: (routes: BusRoute[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, 'routes'), (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusRoute)));
-  }, (error) => {
-    console.error("Error subscribing to routes:", error);
-  });
+  let isUnsubscribed = false;
+  let retryTimer: NodeJS.Timeout;
+  let currentUnsub: Unsubscribe | null = null;
+
+  const startSub = () => {
+    if (isUnsubscribed) return;
+    currentUnsub = onSnapshot(collection(db, 'routes'), (snap) => {
+      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusRoute)));
+    }, (error) => {
+      console.error("Error subscribing to routes, retrying:", error);
+      if (currentUnsub) currentUnsub();
+      retryTimer = setTimeout(startSub, 2000);
+    });
+  };
+  startSub();
+
+  return () => {
+    isUnsubscribed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    if (currentUnsub) currentUnsub();
+  };
 }
 
 // ── Buses ────────────────────────────────────────────────────────────────────
@@ -84,11 +116,27 @@ export async function deleteBus(id: string) {
 }
 
 export function subscribeBuses(callback: (buses: Bus[]) => void): Unsubscribe {
-  return onSnapshot(collection(db, 'buses'), (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Bus)));
-  }, (error) => {
-    console.error("Error subscribing to buses:", error);
-  });
+  let isUnsubscribed = false;
+  let retryTimer: NodeJS.Timeout;
+  let currentUnsub: Unsubscribe | null = null;
+
+  const startSub = () => {
+    if (isUnsubscribed) return;
+    currentUnsub = onSnapshot(collection(db, 'buses'), (snap) => {
+      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Bus)));
+    }, (error) => {
+      console.error("Error subscribing to buses, retrying:", error);
+      if (currentUnsub) currentUnsub();
+      retryTimer = setTimeout(startSub, 2000);
+    });
+  };
+  startSub();
+
+  return () => {
+    isUnsubscribed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    if (currentUnsub) currentUnsub();
+  };
 }
 
 // ── Alerts ───────────────────────────────────────────────────────────────────
@@ -108,10 +156,26 @@ export async function deactivateAlert(id: string) {
 }
 
 export function subscribeAlerts(callback: (alerts: BusAlert[]) => void): Unsubscribe {
-  const q = query(collection(db, 'alerts'), where('active', '==', true), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusAlert)));
-  }, (error) => {
-    console.error("Error subscribing to alerts:", error);
-  });
+  let isUnsubscribed = false;
+  let retryTimer: NodeJS.Timeout;
+  let currentUnsub: Unsubscribe | null = null;
+
+  const startSub = () => {
+    if (isUnsubscribed) return;
+    const q = query(collection(db, 'alerts'), where('active', '==', true), orderBy('createdAt', 'desc'));
+    currentUnsub = onSnapshot(q, (snap) => {
+      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BusAlert)));
+    }, (error) => {
+      console.error("Error subscribing to alerts, retrying:", error);
+      if (currentUnsub) currentUnsub();
+      retryTimer = setTimeout(startSub, 2000);
+    });
+  };
+  startSub();
+
+  return () => {
+    isUnsubscribed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    if (currentUnsub) currentUnsub();
+  };
 }
